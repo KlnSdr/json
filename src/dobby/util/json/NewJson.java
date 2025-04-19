@@ -83,13 +83,13 @@ public class NewJson implements Serializable {
             // parse JSON
             if (c == '{') {
                 depth++;
-                if (depth == 0 && !isChild) {
+                if (depth == 0 && !isChild && key == null) {
                     continue;
                 }
                 final Tupel<String, Integer> res = extractNextJson(raw, i);
 
                 if (res == null || key == null) {
-                    LOGGER.error("Malformed JSON: " + raw);
+                    LOGGER.error("Malformed JSON, expected valid json object as child or key is null: " + raw);
                     if (!SILENT_EXCEPTIONS) {
                         throw new MalformedJsonException(raw);
                     }
@@ -105,7 +105,7 @@ public class NewJson implements Serializable {
                 if (c == '"') {
                     final Tupel<String, Integer> res = extractNextString(raw, i);
                     if (res == null) {
-                        LOGGER.error("Malformed JSON: " + raw);
+                        LOGGER.error("Malformed JSON, expected string as child or key is null: " + raw);
                         if (!SILENT_EXCEPTIONS) {
                             throw new MalformedJsonException(raw);
                         }
@@ -135,7 +135,7 @@ public class NewJson implements Serializable {
                     // parse int or float
                     final Tupel<String, Integer> res = extractNextNumber(raw, i);
                     if (key == null) {
-                        LOGGER.error("Malformed JSON: " + raw);
+                        LOGGER.error("Malformed JSON, expected number as child or key is null: " + raw);
                         if (!SILENT_EXCEPTIONS) {
                             throw new MalformedJsonException(raw);
                         }
@@ -155,7 +155,7 @@ public class NewJson implements Serializable {
                     final Tupel<Boolean, Integer> res = extractNextBoolean(raw, i);
 
                     if (res == null || key == null) {
-                        LOGGER.error("Malformed JSON: " + raw);
+                        LOGGER.error("Malformed JSON, expected boolean as child or key is null: " + raw);
                         if (!SILENT_EXCEPTIONS) {
                             throw new MalformedJsonException(raw);
                         }
@@ -170,7 +170,7 @@ public class NewJson implements Serializable {
                     final Tupel<String, Integer> res = extractNextArray(raw, i);
 
                     if (res == null || key == null) {
-                        LOGGER.error("Malformed JSON: " + raw);
+                        LOGGER.error("Malformed JSON, expected list as child or key is null: " + raw);
                         if (!SILENT_EXCEPTIONS) {
                             throw new MalformedJsonException(raw);
                         }
@@ -181,6 +181,21 @@ public class NewJson implements Serializable {
 
                     json.listData.put(key, array);
 
+                    key = null;
+                    i = res._2();
+                } else if (c == 'n') {
+                    // parse null
+                    final Tupel<Boolean, Integer> res = isNextNull(raw, i);
+
+                    if (res == null || key == null || !res._1()) {
+                        LOGGER.error("Malformed JSON, expected null as child or key is null: " + raw);
+                        if (!SILENT_EXCEPTIONS) {
+                            throw new MalformedJsonException(raw);
+                        }
+                        return null;
+                    }
+
+                    // don't add null to json
                     key = null;
                     i = res._2();
                 }

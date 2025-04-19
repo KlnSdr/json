@@ -42,6 +42,31 @@ public class DataExtractionHelper {
         }
     }
 
+    public static Tupel<Boolean, Integer> isNextNull(String raw, int offset) {
+        final StringBuilder sb = new StringBuilder();
+
+        for (int i = offset; i < raw.length(); i++) {
+            final char c = raw.charAt(i);
+
+            if (c == ',' || Arrays.stream(VALUE_DELIMITERS).anyMatch(d -> d.equals(String.valueOf(c)))) {
+                final String value = sb.toString().trim();
+                if (value.equals("null")) {
+                    return new Tupel<>(true, i);
+                } else {
+                    return null;
+                }
+            }
+            sb.append(c);
+        }
+
+        final String value = sb.toString().trim();
+        if (value.equals("null")) {
+            return new Tupel<>(true, raw.length());
+        } else {
+            return null;
+        }
+    }
+
     public static Tupel<String, Integer> extractNextNumber(String raw, int offset) {
         final StringBuilder sb = new StringBuilder();
 
@@ -268,6 +293,20 @@ public class DataExtractionHelper {
                     resultList.add(Integer.parseInt(res._1()));
                 }
 
+                i = res._2();
+            } else if (c == 'n') {
+                // parse null
+                final Tupel<Boolean, Integer> res = isNextNull(raw, i);
+
+                if (res == null || !res._1()) {
+                    LOGGER.error("Malformed JSON, expected null as child: " + raw);
+                    if (!NewJson.isSilentExceptions()) {
+                        throw new MalformedJsonException(raw);
+                    }
+                    return null;
+                }
+
+                resultList.add(res._1());
                 i = res._2();
             }
         }

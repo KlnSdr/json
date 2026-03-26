@@ -131,7 +131,7 @@ public class NewJson implements Serializable {
                         key = null;
                         i = res._2();
                     }
-                } else if (c == '0' || c == '1' || c == '2' || c == '3' || c == '4' || c == '5' || c == '6' || c == '7' || c == '8' || c == '9') {
+                } else if (c == '-' || c == '0' || c == '1' || c == '2' || c == '3' || c == '4' || c == '5' || c == '6' || c == '7' || c == '8' || c == '9') {
                     // parse int or float
                     final Tupel<String, Integer> res = extractNextNumber(raw, i);
                     if (key == null) {
